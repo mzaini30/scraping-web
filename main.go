@@ -53,9 +53,9 @@ func scrapeRecursively(filename string, iterations int) error {
 				continue
 			}
 		}
-		// Ambil semua link dari hasil.txt (termasuk yang sudah diolah sebelumnya)
+		// Ambil semua link dari hasil/hasil.txt (termasuk yang sudah diolah sebelumnya)
 		// untuk digunakan pada iterasi berikutnya
-		urls, err = readURLsFromFile("hasil.txt")
+		urls, err = readURLsFromFile("hasil/hasil.txt")
 		if err != nil {
 			return err
 		}
@@ -124,21 +124,21 @@ func scrapeAndSaveLinks(url string, iteration int) error {
 	sort.Strings(links)
 
 	// Membuat folder "hasil" jika belum ada
-	// if _, err := os.Stat("hasil"); os.IsNotExist(err) {
-	// 	err := os.Mkdir("hasil", 0755)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// }
+	if _, err := os.Stat("hasil"); os.IsNotExist(err) {
+		err := os.Mkdir("hasil", 0755)
+		if err != nil {
+			return err
+		}
+	}
 
-	// Menyimpan link ke file hasil.txt dengan menambahkan hasil iterasi sebelumnya
+	// Menyimpan link ke file hasil/hasil.txt dengan menambahkan hasil iterasi sebelumnya
 	// outputFilePath := fmt.Sprintf("hasil/%s.txt", cleanedURL)
-	err = saveLinksToFile("hasil.txt", links, iteration)
+	err = saveLinksToFile("hasil/hasil.txt", links, iteration)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("Links on %s (iteration %d) saved to hasil.txt\n", url, iteration)
+	fmt.Printf("Links on %s (iteration %d) saved to hasil/hasil.txt\n", url, iteration)
 	return nil
 }
 
