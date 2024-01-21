@@ -42,72 +42,29 @@ func scrapeRecursively(filename string, iterations int) error {
 		return err
 	}
 
-	// Lakukan scraping untuk setiap URL
-	for _, url := range urls {
-		// Lakukan scraping dan simpan hasil
-		err := scrapeAndSaveLinks(url)
-		if err != nil {
-			fmt.Printf("Error scraping %s: %v\n", url, err)
-			continue
-		}
-
-		// Lakukan scraping rekursif untuk hasil yang baru saja disimpan
-		for i := 0; i < iterations; i++ {
-			err := scrapeAndSaveLinksRecursively(url, i+1)
+	// Iterasi sebanyak yang ditentukan di kedalaman.txt
+	for i := 1; i <= iterations; i++ {
+		// Lakukan scraping untuk setiap URL
+		for _, url := range urls {
+			// Lakukan scraping dan simpan hasil
+			err := scrapeAndSaveLinks(url, i)
 			if err != nil {
-				fmt.Printf("Error in recursive scraping for %s (iteration %d): %v\n", url, i+1, err)
+				fmt.Printf("Error scraping %s: %v\n", url, err)
 				continue
 			}
 		}
-	}
-
-	return nil
-}
-
-func scrapeAndSaveLinksRecursively(url string, iteration int) error {
-	// Membersihkan URL agar dapat digunakan sebagai nama file
-	cleanedURL := strings.ReplaceAll(url, "https://", "")
-	cleanedURL = strings.ReplaceAll(cleanedURL, "http://", "")
-	cleanedURL = strings.ReplaceAll(cleanedURL, "www.", "")
-	cleanedURL = strings.ReplaceAll(cleanedURL, "/", "_")
-	cleanedURL = strings.ReplaceAll(cleanedURL, ":", "_")
-
-	// Membaca file hasil yang sudah ada
-	filePath := fmt.Sprintf("hasil/%s.txt", cleanedURL)
-	existingLinks, err := readURLsFromFile(filePath)
-	if err != nil {
-		return err
-	}
-
-	// Lakukan scraping untuk setiap link di file hasil
-	for _, link := range existingLinks {
-		err := scrapeAndSaveLinks(link)
+		// Ambil semua link dari hasil.txt (termasuk yang sudah diolah sebelumnya)
+		// untuk digunakan pada iterasi berikutnya
+		urls, err = readURLsFromFile("hasil.txt")
 		if err != nil {
-			fmt.Printf("Error scraping %s: %v\n", link, err)
-			continue
+			return err
 		}
 	}
 
-	// Menampilkan pesan untuk iterasi tertentu
-	fmt.Printf("Links on %s (iteration %d) saved to %s\n", url, iteration, filePath)
-
 	return nil
 }
 
-func readURLsFromFile(filename string) ([]string, error) {
-	content, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	// Membersihkan karakter \r pada setiap baris
-	content = bytes.Replace(content, []byte("\r"), []byte{}, -1)
-
-	urls := strings.Split(string(content), "\n")
-	return urls, nil
-}
-
-func scrapeAndSaveLinks(url string) error {
+func scrapeAndSaveLinks(url string, iteration int) error {
 	// Membersihkan URL agar dapat digunakan sebagai nama file
 	cleanedURL := strings.ReplaceAll(url, "https://", "")
 	cleanedURL = strings.ReplaceAll(cleanedURL, "http://", "")
@@ -167,40 +124,53 @@ func scrapeAndSaveLinks(url string) error {
 	sort.Strings(links)
 
 	// Membuat folder "hasil" jika belum ada
-	if _, err := os.Stat("hasil"); os.IsNotExist(err) {
-		err := os.Mkdir("hasil", 0755)
-		if err != nil {
-			return err
-		}
-	}
+	// if _, err := os.Stat("hasil"); os.IsNotExist(err) {
+	// 	err := os.Mkdir("hasil", 0755)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
 
-	// Menyimpan link ke file
-	outputFilePath := fmt.Sprintf("hasil/%s.txt", cleanedURL)
-	err = saveLinksToFile(outputFilePath, links)
+	// Menyimpan link ke file hasil.txt dengan menambahkan hasil iterasi sebelumnya
+	// outputFilePath := fmt.Sprintf("hasil/%s.txt", cleanedURL)
+	err = saveLinksToFile("hasil.txt", links, iteration)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("Links on %s saved to %s\n", url, outputFilePath)
+	fmt.Printf("Links on %s (iteration %d) saved to hasil.txt\n", url, iteration)
 	return nil
 }
 
-func saveLinksToFile(filename string, links []string) error {
-	file, err := os.Create(filename)
+func saveLinksToFile(filename string, links []string, iteration int) error {
+	file, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	// Menyimpan link ke file
+	// Menyimpan link ke file dengan menambahkan hasil iterasi sebelumnya
 	for _, link := range links {
-		_, err := file.WriteString(link + "\n")
+		_, err := file.WriteString(link + fmt.Sprintf(" (iteration %d)\n", iteration))
 		if err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func readURLsFromFile(filename string) ([]string, error) {
+	content, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	// Membersihkan karakter \r pada setiap baris
+	content = bytes.Replace(content, []byte("\r"), []byte{}, -1)
+
+	urls := strings.Split(string(content), "\n")
+	return urls, nil
 }
 
 func removeDuplicates(links []string) []string {
