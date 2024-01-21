@@ -7,14 +7,29 @@ import (
 	"net/http"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 )
 
 func main() {
+	// Baca isi file kedalaman.txt
+	depthStr, err := ioutil.ReadFile("kedalaman.txt")
+	if err != nil {
+		fmt.Println("Error reading depth file:", err)
+		return
+	}
+
+	// Konversi isi file ke dalam bentuk bilangan bulat
+	depth, err := strconv.Atoi(string(depthStr))
+	if err != nil {
+		fmt.Println("Error converting depth to integer:", err)
+		return
+	}
+
 	// Lakukan scraping rekursif untuk setiap URL di file link.txt
-	err := scrapeRecursively("link.txt", 3)
+	err = scrapeRecursively("link.txt", depth)
 	if err != nil {
 		fmt.Println("Error in recursive scraping:", err)
 	}

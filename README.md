@@ -9,3 +9,7 @@ https://pinterest.com
 ```
 
 Kemudian, jalankan `scraping.exe`. Hasilnya akan terbentuk di folder `hasil`.
+
+## Mengubah kedalaman scraping
+
+Edit file `kedalaman.txt`
